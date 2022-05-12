@@ -26,6 +26,15 @@ jobs:
         with:
           base-branch: $GITHUB_BASE_REF
           pr-branch: $GITHUB_HEAD_REF
+  validate-terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ohpensource/terraform-validate-gh-action/action@0.0.0.1
+        name: validate-terraform
+        with:
+          terraform-folder: ""
+          use-backend: "false"
   documentation:
     runs-on: ubuntu-latest
     steps:
@@ -43,3 +52,19 @@ jobs:
         with:
           script: |
               core.setFailed('Include documentation in the README.md file!')
+  tfm-docs:
+    needs: documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - name: Render terraform docs inside the README.md and push changes back to PR branch
+        uses: terraform-docs/gh-actions@v0.11.0
+        with:
+          working-dir: .
+          output-file: README.md
+          output-method: inject
+          git-push: "true"
+          indention: 3
+          git-commit-message: "[tfm-docs][skip ci] - updating terraform docs"
