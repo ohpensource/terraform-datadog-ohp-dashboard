@@ -9,8 +9,29 @@ resource "datadog_dashboard" "availability" {
       layout_type = local.layout_type
 
       widget {
-        note_definition {
-          content = "AVAILABILITY"
+        query_value_definition {
+          request {
+            query {
+              metric_query {
+                name       = "requests"
+                aggregator = "avg"
+                query      = "sum:aws.apigateway.count{apiid:${var.api_id}}.as_count()"
+              }
+            }
+            query {
+              metric_query {
+                name       = "failed_requests"
+                aggregator = "avg"
+                query      = "sum:aws.apigateway.5xxerror{apiid:${var.api_id}}.as_count()"
+              }
+            }
+            formula {
+              formula_expression = "100 * (requests-failed_requests)/requests"
+            }
+          }
+          custom_unit = "%"
+          precision   = "1"
+          title       = "Availability"
         }
       }
 
